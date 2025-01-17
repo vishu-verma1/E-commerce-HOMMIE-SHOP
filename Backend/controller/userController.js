@@ -126,6 +126,7 @@ module.exports.sendMailController = async (req, res) => {
     lowerCaseAlphabets: false,
   });
 
+
   const { email } = req.user;
   await userModel.findOneAndUpdate({ email }, { otp: otp });
 
