@@ -1,0 +1,6 @@
+DB_URI = 
+JWT_SECRET = 
+MAIL_USERNAME= email for sending email
+MAIL_PASSKEY=  ktca tucw aktg yrlf
+CLOUDINARY_API_KEY = 
+CLOUDINARY_SECERET = 

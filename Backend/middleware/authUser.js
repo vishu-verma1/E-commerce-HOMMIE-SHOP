@@ -33,15 +33,15 @@ module.exports.isLogin = async function(req,res,next){
 
 module.exports.sendMail = async (email, emailToken,req,res)=>{
 
-    const transporter = nodemailer.createTransport({
-        service:'gmail',
-        host: "smtp.gmail.com",
-        port: 587,
-        auth: {
-          user: process.env.MAIL_USERNAME,
-          pass: process.env.MAIL_PASSWORD,
-        },
-    });
+    // const transporter = nodemailer.createTransport({
+    //     service:'gmail',
+    //     host: "smtp.gmail.com",
+    //     port: 587,
+    //     auth: {
+    //       user: process.env.MAIL_USERNAME,
+    //       pass: process.env.MAIL_PASSWORD,
+    //     },
+    // });
 
     let mailOptions = {
         from: process.env.MAIL_USERNAME,
@@ -53,15 +53,15 @@ module.exports.sendMail = async (email, emailToken,req,res)=>{
 
 
 
-      transporter.sendMail(mailOptions, (err, info) => {
-        if (!err) {
-            userModel.findOneAndUpdate({email},{accountactive:true})
-        return res.status(200).json({ meesage: "Email sent", info });
-        } 
-        else {
+    //   transporter.sendMail(mailOptions, (err, info) => {
+    //     if (!err) {
+    //         userModel.findOneAndUpdate({email},{accountactive:true})
+    //     return res.status(200).json({ meesage: "Email sent", info });
+    //     } 
+    //     else {
             
-        return res.status(401).json({ error: err, message: "Mail Box is Unavailable" });
-        }
-      });
+    //     return res.status(401).json({ error: err, message: "Mail Box is Unavailable" });
+    //     }
+    //   });
 
 }

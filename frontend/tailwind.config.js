@@ -13,7 +13,14 @@ export default {
 
       screens:{
       },
+
+      height: {
+
+        'calc-120': 'calc(120%)' // Defines a height of 120% of the parent
+
+      }
+
     },
   },
-  plugins: [],
+  plugins: [require("tailwind-scrollbar-hide")],
 }

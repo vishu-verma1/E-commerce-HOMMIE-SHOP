@@ -32,13 +32,14 @@ module.exports.createUser = async ({firstname, lastname,email, password, image,m
 
 };
 
-module.exports.addAddress = async({state, city, zip, address,ref}) =>{
+module.exports.addAddress = async({state, city, zip, addressType, address,ref}) =>{
 
   const addressCreated = await addressModel.create({
     state,
     city,
     zip,
     address,
+    addressType,
     ref
   });
 

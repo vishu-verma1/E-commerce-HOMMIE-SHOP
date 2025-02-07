@@ -19,6 +19,17 @@ const addressSchema = new mongoose.Schema({
         type:String,
     },
 
+    addressType:{
+        type:String,
+        enum:["default","home", "office"]
+    },
+
+    selected:{
+        type:Boolean,
+        default:false,
+        
+    },
+
     ref :{
         type:mongoose.Schema.Types.ObjectId, 
         ref: "user"

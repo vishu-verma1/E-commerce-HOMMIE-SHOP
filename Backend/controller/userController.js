@@ -1,4 +1,6 @@
 const userModel = require("../models/userModel");
+const fs = require("fs");
+const path = require("path");
 const userService = require("../services/userService");
 const { validationResult } = require("express-validator");
 const nodemailer = require("nodemailer");
@@ -6,6 +8,8 @@ const otpGenerator = require("otp-generator");
 const dotenv = require("dotenv");
 const { sendMail } = require("../middleware/authUser");
 const wishListModel = require("../models/wishListModel");
+const blackListedModel = require("../models/blackListedModel");
+const addressModel = require("../models/addressModel");
 dotenv.config();
 
 module.exports.signUpController = async (req, res) => {
@@ -23,10 +27,8 @@ module.exports.signUpController = async (req, res) => {
       fullname,
       email,
       password,
-      image,
       mobile,
       isverified,
-      emailtoken,
       otp,
       accountactive,
     } = req.body;
@@ -44,7 +46,6 @@ module.exports.signUpController = async (req, res) => {
       lastname: fullname.lastname,
       email,
       password: hash,
-      image,
       mobile,
       isverified,
       otp,
@@ -57,11 +58,47 @@ module.exports.signUpController = async (req, res) => {
     const token = user.authUser();
 
     //sending mail for confirmation
-    sendMail(email, emailToken);
+    // sendMail(email, emailToken,req,res);
 
-    res.status(200).json({ token: token, message: "user added successfuly" });
+    res.status(201).json({ user, token, message: "user added successfuly" });
   } catch (err) {
-    res.status(200).json({ message: err.message, token: null });
+    res.status(401).json({ message: err.message, token: null });
+  }
+};
+
+module.exports.updateController = async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { fullname, mobile, email } = req.body;
+    const user = await userModel.findOne({ email: req.user.email });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (fullname) {
+      user.fullname.firstname = fullname.firstname || user.fullname.firstname;
+      user.fullname.lastname = fullname.lastname || user.fullname.lastname;
+    }
+
+    if (mobile) {
+      user.mobile = mobile;
+    }
+
+    if (email) {
+      user.email = email;
+    }
+
+    await user.save();
+
+    res.status(200).json({ message: "User updated successfully", user });
+  } catch (err) {
+    console.error("Error updating user:", err);
+    res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
@@ -99,7 +136,7 @@ module.exports.loginController = async (req, res) => {
   const user = await userModel.findOne({ email: email }).select("+password");
 
   if (!user) {
-    return res.staus(401).json({ message: "invalid email and password" });
+    return res.status(401).json({ message: "invalid email and password" });
   }
 
   const isMatch = await user.comparePassword(password);
@@ -110,7 +147,19 @@ module.exports.loginController = async (req, res) => {
 
   const token = user.authUser();
 
-  return res.status(200).json({ user, token });
+  return res.status(201).json({ user, token });
+};
+
+module.exports.logoutController = async (req, res, next) => {
+  const token = req.cookies.token || req.headers.authorization.split(" ")[1];
+  await blackListedModel.create({ token });
+  res.clearCookie("token");
+
+  res.status(200).json({ message: "Logged Out" });
+};
+
+module.exports.getUserProfileController = async (req, res, next) => {
+  res.status(200).json(req.user);
 };
 
 module.exports.sendMailController = async (req, res) => {
@@ -125,7 +174,6 @@ module.exports.sendMailController = async (req, res) => {
     specialChars: false,
     lowerCaseAlphabets: false,
   });
-
 
   const { email } = req.user;
   await userModel.findOneAndUpdate({ email }, { otp: otp });
@@ -260,15 +308,15 @@ module.exports.passwordUpdatetController = async (req, res) => {
   }
   const { email } = req.user;
   const user = await userModel.findOne({ email });
-  //  console.log(user)
+  
 
-  const { oldpassword, newpassword, confirmpassword } = req.body;
+  const { newpassword, confirmpassword } = req.body;
 
-  const isMatch = await user.comparePassword(oldpassword);
+  // const isMatch = await user.comparePassword(oldpassword);
 
-  if (!isMatch) {
-    return res.status(401).json({ message: "invalid old password" });
-  }
+  // if (!isMatch) {
+  //   return res.status(401).json({ message: "invalid old password" });
+  // }
 
   if (newpassword != confirmpassword) {
     return res
@@ -288,23 +336,90 @@ module.exports.addressController = async (req, res) => {
   // #swagger.tags = ['Users']
 
   try {
-    const { state, city, zip, address } = req.body;
+    const { state, city, zip, address, addressType } = req.body;
+    
+    const addressCount = await addressModel.countDocuments({ ref: req.user._id });
+    if (addressCount >= 5) {
+      return res.status(400).json({ message: "You cannot add more than 5 addresses" });
+    }
+
+    if (addressType === "default") {
+      const defaultAddress = await addressModel.findOne({ ref: req.user._id, addressType: "default" });
+      if (defaultAddress) {
+        return res.status(400).json({ message: "You already have a default address" });
+      }
+    }
 
     const add = await userService.addAddress({
       state,
       city,
       zip,
       address,
+      addressType,
       ref: req.user._id,
     });
 
     add.save();
+   
 
-    res.status(200).json({ message: "address is added to the profile" });
+    res.status(200).json({ message: "Address is added to the profile" });
   } catch (err) {
-    res
-      .status(401)
-      .json({ error: err.array(), message: "somthing went wrong" });
+    res.status(401).json({ error: err.message, message: "Something went wrong" });
+  }
+};
+
+module.exports.updateAddressController = async (req, res) => {
+  // #swagger.tags = ['Users']
+
+  try {
+    const { addressId, state, city, zip, address, addressType, selected } = req.body;
+
+    const addressToUpdate = await addressModel.findOne({ _id: addressId, ref: req.user._id });
+
+    if (!addressToUpdate) {
+      return res.status(404).json({ message: "Address not found" });
+    }
+
+    if (addressType === "default" && addressToUpdate.addressType !== "default") {
+      const defaultAddress = await addressModel.findOne({ ref: req.user._id, addressType: "default" });
+      if (defaultAddress) {
+        return res.status(400).json({ message: "You already have a default address" });
+      }
+    }
+
+    if (selected) {
+      await addressModel.updateMany({ ref: req.user._id, _id: { $ne: addressId } }, { selected: false });
+    }
+
+    addressToUpdate.state = state || addressToUpdate.state;
+    addressToUpdate.city = city || addressToUpdate.city;
+    addressToUpdate.zip = zip || addressToUpdate.zip;
+    addressToUpdate.address = address || addressToUpdate.address;
+    addressToUpdate.addressType = addressType || addressToUpdate.addressType;
+    addressToUpdate.selected = selected;
+
+    await addressToUpdate.save();
+
+    res.status(200).json({ message: "Address updated successfully" });
+  } catch (err) {
+    res.status(400).json({ error: err.message, message: "Something went wrong" });
+  }
+};
+
+module.exports.getAddressController = async (req, res) => {
+  // #swagger.tags = ['Users']
+
+  try {
+    
+    const addresses = await addressModel.find({ ref: req.user._id });
+
+    if (!addresses || addresses.length === 0) {
+      return res.status(200).json({ message: "No addresses found" });
+    }
+
+    res.status(200).json({ addresses, message: "Addresses fetched successfully" });
+  } catch (err) {
+    res.status(400).json({ error: err.message, message: "Something went wrong" });
   }
 };
 
@@ -314,9 +429,16 @@ module.exports.profilePicController = async (req, res) => {
   // #swagger.parameters = [{"name": "image","in": "formData","type": "file","description":"Choose profile pic", "x-mimetype":"application/image" }
 
   try {
-    const user = await userModel.findOne({ email: req.user.email });
-    user.image = req.file.path;
-    user.save();
+    if (req.user.image) {
+      const oldImagePath = path.resolve(__dirname, "../..", req.user.image);
+
+      if (fs.existsSync(oldImagePath)) {
+        fs.unlinkSync(oldImagePath); 
+      }
+    }
+
+    req.user.image = req.file.path;
+    req.user.save();
     res.status(200).json({ message: "profile picture changed" });
   } catch (err) {
     res.status(401).json({ error: err, message: "something went wrong" });
@@ -327,11 +449,26 @@ module.exports.addToCartController = async (req, res) => {
   // #swagger.tags = ['Users']
 
   try {
-    const user = await userModel.find({ email: req.user.email });
-    user.cart.push(req.params.productid);
+    const user = await userModel.findOne({ email: req.user.email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (!user.cart) {
+      user.cart = [];
+    }
+
+    const productId = req.params.productid;
+    if (user.cart.includes(productId)) {
+      return res
+        .status(400)
+        .json({ message: "Product is already in the cart" });
+    }
+
+    user.cart.push(productId);
     await user.save();
 
-    res.status(200).json({ message: "your product is added to cart" });
+    res.status(200).json({ message: "Your product is added to cart" });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -341,17 +478,33 @@ module.exports.addToWishListController = async (req, res) => {
   try {
     const productid = req.params.productid;
     const userid = req.user._id;
-    const wishListexist = await wishListModel.find({produtId:productid});
-    if(wishListexist){
-      return res.status(400).json({message:"Product is already in your wishlist"})
+    const wishListexist = await wishListModel.find({ produtId: productid });
+    if (wishListexist) {
+      return res
+        .status(400)
+        .json({ message: "Product is already in your wishlist" });
     }
 
     const wishProduct = await userService.createAddToWishList({
       userid,
-      productid
-    })
+      productid,
+    });
 
-    res.status(200).json({wishProduct, message:"your product is added to your wishlist"})
+    res
+      .status(200)
+      .json({ wishProduct, message: "your product is added to your wishlist" });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+module.exports.getCartListController = async (req, res) => {
+  try {
+    const user = await userModel
+      .findOne({ email: req.user.email })
+      .populate("cart");
+
+    res.status(200).json({ cart: user.cart, message: "your list" });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }

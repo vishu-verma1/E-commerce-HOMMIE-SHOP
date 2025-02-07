@@ -8,12 +8,14 @@ const cookieParser = require("cookie-parser")
 const userRoute = require("./routes/userRoutes")
 const productRoute = require("./routes/productRoutes");
 const path = require("path")
+const cors = require("cors")
 const swaggerUi = require('swagger-ui-express');
 const swaggerDocument = require('./swagger-output.json');
 
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({extended:true}));
-app.use(express.static(path.join(__dirname, "public")));
+app.use('/public', express.static(path.join(__dirname, 'public')));
 app.use(cookieParser());
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 

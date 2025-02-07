@@ -25,8 +25,7 @@ const productSchema = new mongoose.Schema(
 
     productimages: [
       {
-        data: Buffer,
-        contentType: String,
+        type:String,
       },
     ],
 
@@ -43,6 +42,12 @@ const productSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+
+    description: {
+      type: String,
+      required: true,
+    },
+
   },
   { timestamps: true }
 );

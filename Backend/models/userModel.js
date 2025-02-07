@@ -72,15 +72,17 @@ const userSchema = new mongoose.Schema({
         expires:600,
     },
 
-    order:{
-        type:Array,
-        default:[]
-    },
+    order:[
+        {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "order",
+        },
+      ],
 
     cart: [
         {
           type: mongoose.Schema.Types.ObjectId,
-          ref: "product",
+          ref: "products",
         },
       ],
 

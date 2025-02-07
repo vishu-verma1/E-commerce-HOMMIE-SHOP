@@ -1,7 +1,7 @@
 const productModel = require("../models/productModel");
 
-module.exports.productCreate = async ({productname, price, productimages, quantity, refid, category}) => {
-    if(!productname|| !price|| !productimages || !quantity){
+module.exports.productCreate = async ({productname, price, productimages, quantity, refid, category, description }) => {
+    if(!productname|| !price|| !productimages || !quantity || !description){
         throw new Error("All field are required")
     }
 
@@ -13,7 +13,8 @@ module.exports.productCreate = async ({productname, price, productimages, quanti
     productimages,
     quantity,
     refid,
-    category
+    category,
+    description
   });
 
   return product;

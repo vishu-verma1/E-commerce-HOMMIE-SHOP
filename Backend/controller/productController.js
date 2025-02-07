@@ -4,6 +4,14 @@ const { validationResult } = require("express-validator");
 const productService = require("../services/productService");
 const orderService = require("../services/orderService");
 const paginate = require("../utils/pagination");
+const cloudinary = require("cloudinary").v2;
+require("dotenv").config();
+
+cloudinary.config({
+  cloud_name: "dwdr6kjsr",
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_SECERET,
+});
 
 module.exports.newProductController = async (req, res) => {
   try {
@@ -52,7 +60,7 @@ module.exports.newProductController = async (req, res) => {
   }
 */
 
-    const { productname, price, quantity, category } = req.body;
+    const { productname, price, quantity, category, description } = req.body;
     const refid = req.params.id;
 
     const existedProduct = await productsModel.findOne({ refid, productname });
@@ -60,18 +68,41 @@ module.exports.newProductController = async (req, res) => {
       return res.status(400).json({ message: "product is allready exist" });
     }
 
-    const productimages = req.files.map((file) => ({
-      data: file.buffer,
-      contentType: file.mimetype,
-    }));
+    let productImages = [];
+
+    if (req.files && req.files.length > 0) {
+      const uploadPromises = req.files.map((file) => {
+        return new Promise((resolve, reject) => {
+          cloudinary.uploader
+            .upload_stream(
+              {
+                folder: "product_images",
+                resource_type: "image",
+                transformation: [
+                  { quality: "auto:good" },
+                  { fetch_format: "auto" },
+                ],
+              },
+              (error, result) => {
+                if (error) return reject(error);
+                resolve(result.secure_url);
+              }
+            )
+            .end(file.buffer);
+        });
+      });
+
+      productImages = await Promise.all(uploadPromises);
+    }
 
     const product = await productService.productCreate({
       productname,
       price: parseInt(price),
-      productimages,
+      productimages: productImages,
       quantity: parseInt(quantity),
       refid,
       category,
+      description,
     });
 
     res.status(200).json({ product, message: "product is created" });
@@ -127,7 +158,7 @@ module.exports.updateProductController = async (req, res) => {
   }
 */
 
-    const { productname, price, quantity, category } = req.body;
+    const { productname, price, quantity, category, description } = req.body;
     const refid = req.params.id;
     const name = req.params.name;
 
@@ -149,6 +180,7 @@ module.exports.updateProductController = async (req, res) => {
     existedProduct.productimages = productimages;
     existedProduct.quantity = quantity;
     existedProduct.category = category;
+    existedProduct.description = description;
 
     existedProduct.save();
 
@@ -184,17 +216,22 @@ module.exports.fetchProductController = async (req, res) => {
   try {
     const page = req.query.page || 1;
     const limit = req.query.limit || 10;
-    let searchTerm = req.query.searchTerm;
+    const { searchTerm, category, minPrice, maxPrice } = req.query;
 
     let sort = {};
-    if (req.query.sortfield && req.query.sortBy) {
+    if (req.query.sortfield && req.query.sortby) {
       const field = req.query.sortfield;
-      const sortorder = req.query.sortBy === "asc" ? 1 : -1;
+      const sortorder = req.query.sortby === "ascending" ? 1 : -1;
       sort[field] = sortorder;
     }
 
-    const pagination = await paginate(page, limit, searchTerm, sort);
-
+    const pagination = await paginate(
+      page,
+      limit,
+      { searchTerm, category, minPrice, maxPrice },
+      sort
+    );
+    //  console.log(pagination.data, 'wwwwwwwwwwwwwwww');
     res.status(200).json({
       data: pagination.data,
       currentPage: pagination.currentPage,
@@ -213,16 +250,18 @@ module.exports.orderController = async (req, res) => {
   // #swagger.tags = ['Products']
 
   try {
-    const { userid, productid, quantity } = req.body;
+    const userid = req.user._id;
+    const { productid, quantity } = req.body;
     const existedProduct = await productsModel
       .findById(productid)
       .populate("refid");
 
     if (!existedProduct && existedProduct.quantity > 0) {
-      return res.status(400).json({ message: "Sorry product is out of stock at the moment" });
+      return res
+        .status(400)
+        .json({ message: "Sorry product is out of stock at the moment" });
     }
 
-    existedProduct.refid.order = productid;
     existedProduct.quantity -= 1;
     existedProduct.save();
     await existedProduct.refid.save();
@@ -235,9 +274,24 @@ module.exports.orderController = async (req, res) => {
       quantity,
       totalamount: price,
     });
-    order.save();
+
+    req.user.order.push(order._id);
+    await req.user.save();
 
     res.status(200).json({ message: "your item is orderd", data: order });
+  } catch (err) {
+    res
+      .status(400)
+      .json({ message: "somthing went wrong", error: err.message });
+  }
+};
+
+module.exports.getOrderListControler = async (req, res) => {
+  try {
+    const orders = await orderModel
+      .find({ userid: req.user._id })
+      .populate("productid");
+    res.status(200).json({ orders, message: "this is order list" });
   } catch (err) {
     res
       .status(400)
