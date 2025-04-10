@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { getCartItems } from "../../redux/actions/cartAction";
+import { getCartItems, removeCartItems } from "../../redux/actions/cartAction";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Pagination as SwiperPagination, Autoplay } from "swiper/modules";
 import Loader from "../Loader";
+import { SET_TOKEN } from "../../constants/userConstant";
+import { getProfile } from "../../redux/actions/userActions";
 
 const CartListComponent = () => {
   const navigate = useNavigate();
@@ -14,9 +16,9 @@ const CartListComponent = () => {
   const cart = useSelector((state) => state.cartData.cart);
   const loading = useSelector((state) => state.cartData.loading);
   const [productImages, setProductImages] = useState([]);
- 
+  const totalAmount = cart?.reduce((acc, item) => acc + parseFloat(item.price), 0) || 0;
+  const [refresh, setRefresh] = useState(false);
 
- 
 
   useEffect(() => {
     if (cart && cart.length > 0) {
@@ -26,19 +28,43 @@ const CartListComponent = () => {
     }
   }, [cart]);
 
+  console.log(cart, "frontend cart")
+
+
+
+  const buyHandler = (product) => {
+
+    navigate("/product-detail", { state: { product } });
+  };
+
+  const removeHandler = (product, e) => {
+    try {
+      // e.preventDefault();
+      dispatch(removeCartItems(product._id, token))
+      setRefresh((prev) => !prev)
+    }
+    catch (err) {
+      console.log("Error uis", err)
+    }
+
+  }
+
+  useEffect(() => {
+    if (refresh) {
+     dispatch(getCartItems(token));
+     console.log(cart, "refresh cart_______");
+    }
+  }, [dispatch, refresh]);
+
   useEffect(() => {
     dispatch(getCartItems(token));
   }, [dispatch]);
 
-  const buyHandler = (product) => {
-    console.log(product)
-    navigate("/product-detail", { state: { product } });
-  };
 
   return (
     <>
       {loading ? (
-        <Loader/>
+        <Loader />
       ) : (
         <div className=" w-100 md:w-8/12 p-4 bg-white  rounded-lg">
           <div className="border-b pb-4 mb-4">
@@ -77,24 +103,34 @@ const CartListComponent = () => {
                     {item.productname}
                   </p>
 
-                  <p className="text-gray-400 line-through text-sm">
-                    {item.Price}
-                  </p>
-
                   <p className="text-sm font-semibold">
                     Available Stocks : {item.quantity}
                   </p>
 
                   <p className="text-lg font-semibold">
-                    Total Ammount: {item.totalamount}
+                    Price : {item.price}
                   </p>
+
+                  <p className="text-gray-500  text-sm">
+                    Category : {item.category}
+                  </p>
+
                 </div>
-                <button
-                  onClick={() => buyHandler(item)}
-                  className="border px-4 py-2 hover:bg-gray-300 text-sm"
-                >
-                  BUY IT NOW
-                </button>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => buyHandler(item)}
+                    className="border px-4 py-2 hover:bg-gray-300 text-sm"
+                  >
+                    BUY IT NOW
+                  </button>
+
+                  <button
+                    onClick={(e) => removeHandler(item, e)}
+                    className="border px-4 py-2 hover:bg-gray-300 text-sm"
+                  >
+                    REMOVE
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -104,9 +140,9 @@ const CartListComponent = () => {
             <div className="p-4 border rounded-lg ">
               <h3 className="font-medium">Summary ({cart?.length} Items)</h3>
               <p className="text-gray-600 text-sm">
-                {/* Order value: {totalAmount} */}
+                Order value: {totalAmount}
               </p>
-          
+
             </div>
           </div>
         </div>

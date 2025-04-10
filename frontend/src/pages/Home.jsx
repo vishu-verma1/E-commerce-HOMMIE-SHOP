@@ -17,10 +17,10 @@ import Loader from "../components/Loader";
 const Home = () => {
   const dispatch = useDispatch();
   const products = useSelector((state) => state.productdata.products);
-  const currentpage = useSelector((state) => state.productdata.currentPage);
+  const currentpage = useSelector((state) => state.productdata.currentPage) || 1;
   const totalPages = useSelector((state) => state.productdata.totalPages);
   const loading = useSelector((state) => state.productdata.loading);
-  
+
   const [search, setSearch] = useState("");
   const [price, setPrice] = useState([0, 25000]);
   const [category, setCategory] = useState("");
@@ -28,8 +28,8 @@ const Home = () => {
   const [sortBy, setSortBy] = useState("Ascending");
 
   const categories = products?.map((product) => product?.category) || [];
-  const priceHandler = (event) => {
-    setPrice(event.target.value);
+  const priceHandler = (event, newValue) => {
+    setPrice(newValue);
   };
 
   const searchHandle = (e) => {
@@ -61,73 +61,66 @@ const Home = () => {
       dispatch(fetchProduct({}));
     }
   }, [dispatch]);
-  // 
-  
 
   return (
     <>
-      
-      
-    
-     { loading ? (<Loader/>) :
-      (<div className="w-full h-screen">
-        <HeaderComponent />
-        <div className="container font-raleway mx-auto mt-20 p-5">
-          <div>
-            <form className="flex justify-center items-center w-full ">
-              <div class="relative">
-                <div class="absolute inset-y-2 start-0 flex items-center ps-3 pointer-events-none">
-                  <svg
-                    class="w-4 h-4 text-gray-500 dark:text-gray-400"
-                    aria-hidden="true"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 20 20"
+      {loading ? (
+        <Loader />
+      ) : (
+        <div className="w-full h-screen">
+          <HeaderComponent />
+          <div className="container font-raleway mx-auto mt-20 p-5">
+            <div>
+              <form className="flex justify-center items-center w-full ">
+                <div className="relative">
+                  <div className="absolute inset-y-2 start-0 flex items-center ps-3 pointer-events-none">
+                    <svg
+                      className="w-4 h-4 text-gray-500 dark:text-gray-400"
+                      aria-hidden="true"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        stroke="currentColor"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"
+                      />
+                    </svg>
+                  </div>
+                  <input
+                    value={search}
+                    onChange={(e) => {
+                      setSearch(e.target.value);
+                    }}
+                    type="search"
+                    id="default-search"
+                    className="block lg:w-96 w-72 md:pl-8 p-3 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:zinc-500 focus:border-zinc-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 placeholder:text-xs dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                    placeholder="Search Products..."
+                    required
+                  />
+                  <button
+                    onClick={searchHandle}
+                    type="submit"
+                    className="text-white absolute md:end-8 end-7 md:bottom-2 bottom-2.5 bg-zinc-900 hover:bg-zinc-500 focus:ring-4 focus:outline-none font-medium rounded-lg md:text-sm text-xs px-2 lg:px-4 py-1 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
                   >
-                    <path
-                      stroke="currentColor"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"
-                    />
-                  </svg>
+                    Search
+                  </button>
                 </div>
-                <input
-                  value={search}
-                  onChange={(e) => {
-                    setSearch(e.target.value);
-                  }}
-                  type="search"
-                  id="default-search"
-                  class="block lg:w-96 w-72 md:pl-8 p-3 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:zinc-500 focus:border-zinc-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 placeholder:text-xs dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                  placeholder="Search Products..."
-                  required
-                />
-                <button
-                  onClick={searchHandle}
-                  type="submit"
-                  class="text-white absolute md:end-8 end-7 md:bottom-2 bottom-2.5 bg-zinc-900 hover:bg-zinc-500 focus:ring-4 focus:outline-none  font-medium rounded-lg md:text-sm  text-xs px-2 lg:px-4 py-1 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-                >
-                  Search
-                </button>
-              </div>
-            </form>
-          </div>
-          {/* filter */}
-
-          {
+              </form>
+            </div>
+            {/* filter */}
             <div
-              className={`w-full mt-5  flex justify-center items-center gap-10 transition-all duration-500 ${
-                search ? "opacity-100 max-h-[500px]" : "opacity-0 max-h-0"
-              }`}
+              className={`w-full mt-5 flex justify-center items-center gap-10 transition-all duration-500 ${search ? "opacity-100 max-h-[500px]" : "opacity-0 max-h-0"
+                }`}
               style={{ transformOrigin: "top" }}
             >
-              <div className="Priceslider w-52  flex  flex-col ">
+              <div className="Priceslider w-52 flex flex-col">
                 <label htmlFor="sortby" className="text-black font-medium mb-2">
                   Price $
                 </label>
-
                 <Slider
                   getAriaLabel={() => "Price range"}
                   className="text-black"
@@ -138,25 +131,28 @@ const Home = () => {
                   min={0}
                   max={25000}
                   sx={{
-                    color: "grey.500", // Change this to your desired color
+                    color: "grey.500",
                     "& .MuiSlider-thumb": {
-                      backgroundColor: "black", // Change thumb color
+                      backgroundColor: "black",
                     },
                     "& .MuiSlider-track": {
-                      backgroundColor: "grey.500", // Change track color
+                      backgroundColor: "grey.500",
                     },
                     "& .MuiSlider-rail": {
-                      backgroundColor: "grey.400", // Change rail color
+                      backgroundColor: "grey.400",
                     },
                   }}
                 />
               </div>
-
               <div className="Categories rounded flex flex-col">
                 <label htmlFor="sortby" className="text-black font-medium mb-2">
                   Category
                 </label>
-                <select className="bg-gray-200 w-32 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-black">
+                <select
+                  className="bg-gray-200 w-32 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-black"
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                >
                   {categories.map((category, index) => (
                     <option key={index} className="text-black">
                       {category}
@@ -164,13 +160,9 @@ const Home = () => {
                   ))}
                 </select>
               </div>
-
-              <div className="flex  gap-4 items-center">
+              <div className="flex gap-4 items-center">
                 <div className="flex flex-col">
-                  <label
-                    className="text-black font-medium mb-2"
-                    htmlFor="sortfield"
-                  >
+                  <label className="text-black font-medium mb-2" htmlFor="sortfield">
                     Sort Field
                   </label>
                   <select
@@ -184,12 +176,8 @@ const Home = () => {
                     <option value="quantity">quantity</option>
                   </select>
                 </div>
-
                 <div className="flex flex-col">
-                  <label
-                    htmlFor="sortby"
-                    className="text-black font-medium mb-2"
-                  >
+                  <label htmlFor="sortby" className="text-black font-medium mb-2">
                     Sort By
                   </label>
                   <select
@@ -203,7 +191,6 @@ const Home = () => {
                   </select>
                 </div>
               </div>
-
               <button
                 className="bg-black text-white px-2 py-1 mt-7 rounded-md hover:bg-gray-500 text-sm transition"
                 onClick={handleFilterSubmit}
@@ -211,86 +198,49 @@ const Home = () => {
                 Apply
               </button>
             </div>
-          }
-          <Swiper
-            modules={[Navigation, SwiperPagination, Autoplay]}
-            navigation
-            autoplay={{ delay: 3000 }}
-            spaceBetween={30}
-            slidesPerView={1}
-            breakpoints={{
-              640: {
-                slidesPerView: 1,
-                spaceBetween: 10,
-              },
-              768: {
-                slidesPerView: 2,
-                spaceBetween: 20,
-              },
-              1024: {
-                slidesPerView: 4,
-                spaceBetween: 30,
-              },
-            }}
-            className="h-full "
-          >
-            {products?.map((each, index) => {
-              return (
-                <SwiperSlide key={index}>
-                  <CardComponent product={each} />
-                </SwiperSlide>
-              );
-            })}
-          </Swiper>
-        </div>
-        {/* <div className="container font-raleway mx-auto mt-10 p-4">
-          <div className="font-bold text-2xl">
-            <h3>Clothes</h3>
+            <Swiper
+              modules={[Navigation, SwiperPagination, Autoplay]}
+              navigation
+              autoplay={{ delay: 3000 }}
+              spaceBetween={30}
+              slidesPerView={1}
+              breakpoints={{
+                640: {
+                  slidesPerView: 1,
+                  spaceBetween: 10,
+                },
+                768: {
+                  slidesPerView: 2,
+                  spaceBetween: 20,
+                },
+                1024: {
+                  slidesPerView: 4,
+                  spaceBetween: 30,
+                },
+              }}
+              className="h-full "
+            >
+              {products?.map((each, index) => {
+                return (
+                  <SwiperSlide key={index}>
+                    <CardComponent product={each} />
+                  </SwiperSlide>
+                );
+              })}
+            </Swiper>
           </div>
-          <Swiper
-            modules={[Navigation, Pagination, Autoplay]}
-            navigation
-            autoplay={{ delay: 3000 }}
-            spaceBetween={30}
-            slidesPerView={1}
-            breakpoints={{
-              640: {
-                slidesPerView: 1,
-                spaceBetween: 10,
-              },
-              768: {
-                slidesPerView: 2,
-                spaceBetween: 20,
-              },
-              1024: {
-                slidesPerView: 4,
-                spaceBetween: 30,
-              },
-            }}
-            className="h-full"
-          >
-            {clothes?.map((each, index)=>{
-              return (
-                <SwiperSlide key={index}>
-                  <CardComponent product={each} />
-                </SwiperSlide>
-              )
-            })}
-          </Swiper>
-        </div> */}
-
-        <div className="pagination w-full flex justify-center">
-          <Pagination
-            count={totalPages}
-            page={currentpage}
-            onChange={paginationHandler}
-          />
+          <div className="pagination w-full flex justify-center">
+            <Pagination
+              count={totalPages}
+              page={currentpage}
+              onChange={paginationHandler}
+            />
+          </div>
+          <div>
+            <Footer />
+          </div>
         </div>
-
-        <div>
-          <Footer />
-        </div>
-      </div>)}
+      )}
     </>
   );
 };

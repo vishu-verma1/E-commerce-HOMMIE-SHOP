@@ -26,7 +26,7 @@ export const LoginForm = () => {
       };
       dispatch(login(user));
 
-      if(!token){
+      if (!token) {
         setShowError(false);
       }
 
@@ -39,8 +39,10 @@ export const LoginForm = () => {
     if (token) {
       navigate("/home");
     }
-    
+
   }, [token, navigate]);
+
+
 
   return (
     <div className="  h-full w-full  flex justify-center items-center">
@@ -112,14 +114,14 @@ export const LoginForm = () => {
                   </Link>
                 </div>
 
-                
+
               </div>
             </form>
-            
-          {showError && (<div><h3 className="mt-2 text-red-500">invalid email and password !</h3></div>)}
+
+            {showError && (<div><h3 className="mt-2 text-red-500">invalid email and password !</h3></div>)}
           </div>
         </div>
-      
+
       </div>
     </div>
   );

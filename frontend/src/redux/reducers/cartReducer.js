@@ -6,6 +6,8 @@ import {
   GET_CART_ITEMS_REQUEST,
   GET_CART_ITEMS_SUCCESS,
   REMOVE_TO_CART,
+  REMOVE_TO_CART_FAIL,
+  REMOVE_TO_CART_REQUEST,
 } from "../../constants/cartConstants";
 
 const initalCartState = {
@@ -20,6 +22,12 @@ const initalGetCartState = {
   loading: false,
 };
 
+const initalRemoveCartState = {
+  message: null,
+  error: null,
+  loading: false,
+};
+
 export const cartReducer = (state = initalCartState, action) => {
   switch (action.type) {
     case ADD_TO_CART_REQUEST:
@@ -28,13 +36,6 @@ export const cartReducer = (state = initalCartState, action) => {
         loading: true,
       };
     case ADD_TO_CART:
-      return {
-        ...state,
-        message: action.payload,
-        loading: false,
-      };
-
-    case REMOVE_TO_CART:
       return {
         ...state,
         message: action.payload,
@@ -76,6 +77,33 @@ export const getCartReducer = (state = initalCartState, action) => {
       };
 
     default:
-      return state ;
+      return state;
+  }
+};
+
+export const removeCartReducer = (state = initalRemoveCartState, action) => {
+  switch (action.type) {
+    case REMOVE_TO_CART_REQUEST:
+      return {
+        ...state,
+        loading: true,
+      };
+
+    case REMOVE_TO_CART:
+      return {
+        ...state,
+        message: action.payload,
+        loading: false,
+      };
+
+    case REMOVE_TO_CART_FAIL:
+      return {
+        ...state,
+        error: action.payload,
+        loading: false,
+      };
+
+    default:
+      return state;
   }
 };

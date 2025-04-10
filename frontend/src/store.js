@@ -11,9 +11,10 @@ import {
   userUpdateReducer,
 } from "./redux/reducers/userReducer";
 import { productFetchReducer } from "./redux/reducers/productReducer";
-import { cartReducer, getCartReducer } from "./redux/reducers/cartReducer";
+import { cartReducer, getCartReducer, removeCartReducer } from "./redux/reducers/cartReducer";
 import { orderItem, orderListReducer } from "./redux/reducers/orderReducer";
 import { addAddressReducer, getAddressReducer, updateAddressReducer } from "./redux/reducers/addressReducer";
+import { getWishlistReducer, removeWishListReducer, wishListReducer } from "./redux/reducers/wishListReducer";
 
 const persistConfig = {
   key: "root",
@@ -34,12 +35,16 @@ const store = configureStore({
     cart: cartReducer,
     order: orderItem,
     addAddress:addAddressReducer,
+    addWishList : wishListReducer,
     updatAddress:updateAddressReducer,
     passwordUpdate: passwordUpdateReducer,
     profile: profileReducer,
     orderData: orderListReducer,
     cartData: getCartReducer,
     addressData:getAddressReducer,
+    getWishlistData: getWishlistReducer,
+    removeWishlist: removeWishListReducer,
+    removeCart : removeCartReducer,
     
   },
   middleware: (getDefaultMiddleware) =>

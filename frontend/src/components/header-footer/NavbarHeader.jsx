@@ -10,7 +10,7 @@ const NavbarHeader = () => {
   const navigate = useNavigate();
   const [click, setClick] = useState(false);
   const [query, setQuery] = useState("");
-  const [navCart, setNavCart] = useState(false);
+ 
 
   const clickHandle = () => {
     setClick((prevClick) => !prevClick);
@@ -29,6 +29,10 @@ const NavbarHeader = () => {
       
       navigate('/profile', { state: { navCart: true } });
     }
+
+    const wishHandler = () => {
+      navigate('/profile', { state: { navWishList: true } });
+    };
 
   const accountHandler = ()=>{
     navigate('/profile')
@@ -63,7 +67,7 @@ const NavbarHeader = () => {
           <div className="ml-10 hidden   md:block">
             <ul className="flex gap-5 lg:gap-10 text-sm lg:text-lg">
               <span className="flex items-center gap-2"> <HomeIcon className="h-4"/> <li className="hover:text-zinc-600 cursor-pointer" onClick={homeHandler} >HOME</li></span>
-              <span className="flex items-center gap-2"> <QueueListIcon className="h-4" /> <li className="hover:text-zinc-600 cursor-pointer">WISHLIST</li></span>
+              <span className="flex items-center gap-2"> <QueueListIcon className="h-4" /> <li className="hover:text-zinc-600 cursor-pointer" onClick={wishHandler}>WISHLIST</li></span>
               <span className="flex items-center gap-2"> <ShoppingBagIcon className="h-4"/> <li className="hover:text-zinc-600 cursor-pointer" onClick={cartHandler}>CART</li></span>
              <span className="flex items-center gap-2"> <UserCircleIcon className="h-4"/> <li className="hover:text-zinc-600 cursor-pointer" onClick={accountHandler} >MY ACCOUNT</li></span>
               <span className="flex items-center gap-2"> <ArrowRightStartOnRectangleIcon className="h-4"/> <li className="hover:text-zinc-600 cursor-pointer" onClick={logoutHandle} >LOGOUT</li></span>
@@ -80,7 +84,7 @@ const NavbarHeader = () => {
           >
             <ul className="text-black py-2 font-semibold">
             <span className="flex items-center gap-2 py-2 "> <HomeIcon className="h-4"/> <li className="hover:text-zinc-600 cursor-pointer" onClick={homeHandler} >HOME</li></span>
-              <span className="flex items-center gap-2 py-2 "> <QueueListIcon className="h-4" /> <li className="hover:text-zinc-600 cursor-pointer">WISHLIST</li></span>
+              <span className="flex items-center gap-2 py-2 "> <QueueListIcon className="h-4" /> <li className="hover:text-zinc-600 cursor-pointer" onClick={wishHandler}>WISHLIST</li></span>
               <span className="flex items-center gap-2 py-2 "> <ShoppingBagIcon className="h-4"/> <li className="hover:text-zinc-600 cursor-pointer" onClick={cartHandler} >CART</li></span>
              <span className="flex items-center gap-2 py-2 "> <UserCircleIcon className="h-4"/> <li className="hover:text-zinc-600 cursor-pointer" onClick={accountHandler}>MY ACCOUNT</li></span>
               <span className="flex items-center gap-2 py-2 "> <ArrowRightStartOnRectangleIcon className="h-4"/> <li className="hover:text-zinc-600 cursor-pointer" onClick={logoutHandle} >LOGOUT</li></span>

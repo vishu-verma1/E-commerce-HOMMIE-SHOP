@@ -1,11 +1,11 @@
 import React, { useEffect, useState, useRef } from "react";
 import gsap from "gsap";
 import { useNavigate } from "react-router-dom";
-import { Buffer } from "buffer";
 import { useDispatch, useSelector } from "react-redux";
 import { addCartItems } from "../../redux/actions/cartAction";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Pagination as SwiperPagination, Autoplay } from "swiper/modules";
+import { addWhishList } from "../../redux/actions/wishListAction";
 
 const CardComponent = ({ product }) => {
   if (!product) {
@@ -43,7 +43,7 @@ const CardComponent = ({ product }) => {
       ease: "Power3.easeOut",
     });
   };
-  // console.log(product,"eeee")
+
   const cardContainer = useRef(null);
   const imageContainer = useRef(null);
   const dispatch = useDispatch();
@@ -51,6 +51,7 @@ const CardComponent = ({ product }) => {
   const token = useSelector((state) => state.auth.token);
   const [productImages, setProductImages] = useState(product.productimages);
   const [price, setPrice] = useState(product.price);
+  const [wishlistTab, setWishlistTab] = useState(false);
   const [stocks, setStocks] = useState(product.quantity);
   const [productName, setProductName] = useState(
     product.productname.replace(/"/g, "")
@@ -62,18 +63,32 @@ const CardComponent = ({ product }) => {
   };
 
   const orderHandler = () => {
-    navigate("/product-detail",{ state: { product } });
+    navigate("/product-detail", { state: { product } });
   };
 
-  const cartHandler = () => {
-    dispatch(addCartItems(productId, token));
+  const cartHandler = (e) => {
+    e.preventDefault();
+    navigate("/product-detail", { state: { product } });
   };
+
+  const wishListHandler = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setWishlistTab(true);
+    };
+
+    useEffect(()=>{
+      if(wishlistTab){
+        dispatch(addWhishList(productId, token));
+      }
+    },[wishlistTab])
+
 
   return (
-    <div className=" w-full my-10 p-4 font-raleway" >
+    <div className="w-full my-10 p-4 font-raleway">
       <div
         ref={cardContainer}
-        onClick={clickHandle}
+
         className="flex flex-col gap-4 bg-gray-200 font-raleway rounded-lg items-center overflow-hidden shadow-md hover:shadow-lg transition-all"
         onMouseEnter={mouseEnter}
         onMouseLeave={mouseLeave}
@@ -90,6 +105,7 @@ const CardComponent = ({ product }) => {
               return (
                 <SwiperSlide key={index}>
                   <img
+                    onClick={clickHandle}
                     src={each}
                     alt="Product"
                     ref={imageContainer}
@@ -117,7 +133,11 @@ const CardComponent = ({ product }) => {
           >
             Order
           </button>
-          <button className="border border-gray-300 bg-gray-200 px-2 py-1 rounded hover:bg-gray-300">
+          <button
+            type="button"
+            className="border border-gray-300 bg-gray-200 px-2 py-1 rounded hover:bg-gray-300"
+            onClick={wishListHandler}
+          >
             Wishlist
           </button>
           <button
@@ -127,6 +147,9 @@ const CardComponent = ({ product }) => {
             Cart
           </button>
         </div>
+        {/* {wishlistTab && (
+          <div className="text-sm mb-1 text-gray-600">Added to wishlist</div>
+        )} */}
       </div>
     </div>
   );

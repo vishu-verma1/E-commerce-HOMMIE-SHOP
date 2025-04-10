@@ -1,20 +1,13 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import { Routes, Route, Navigate } from "react-router-dom";
-import Home from "./pages/Home";
+// import Home from "./pages/Home";
+const Home = lazy(() => import("./pages/Home"));
 import ProtectedRoute from "./utils/ProtectedRoute";
-import CardComponent from "./components/Products/CardComponent";
-import NavbarHeader from "./components/header-footer/NavbarHeader";
-import HeaderComponent from "./components/header-footer/HeaderComponent";
 import ProductDetail from "./pages/ProductDetail";
 import OrderdComponent from "./components/order/orderdComponent";
-import UserProfileCard from "./components/user/UserProfileCard";
-import UserProfileComponent from "./components/profileComponents/UserProfileComponent";
 import Account from "./pages/Account";
-import OrderListComponent from "./components/profileComponents/OrderListComponent";
-import CartListComponent from "./components/profileComponents/CartListComponent";
-import AccountSettingComponent from "./components/profileComponents/AccountSettingComponent";
 
 function App() {
   return (
@@ -24,7 +17,9 @@ function App() {
           path="/home"
           element={
             <ProtectedRoute>
-              <Home />
+              <Suspense fallback={<>Loading....</>}>
+                <Home />
+              </Suspense>
             </ProtectedRoute>
           }
         />
@@ -32,17 +27,17 @@ function App() {
         <Route path="/login" element={<Login />} />
 
         <Route path="/product-detail" element={<ProtectedRoute>
-          <ProductDetail/>
-        </ProtectedRoute>}/>
-        
-       
+          <ProductDetail />
+        </ProtectedRoute>} />
+
+
         <Route path="/order-complete" element={<ProtectedRoute>
-          <OrderdComponent/>
-        </ProtectedRoute>}/>
+          <OrderdComponent />
+        </ProtectedRoute>} />
 
-        <Route path="/profile" element={<ProtectedRoute><Account/></ProtectedRoute>}/>
+        <Route path="/profile" element={<ProtectedRoute><Account /></ProtectedRoute>} />
 
-        {/* <Route path="/" element={<AccountSettingComponent/>}/> */}
+        {/* <Route path="/" element={<WishListComponent/>}/> */}
 
       </Routes>
     </>

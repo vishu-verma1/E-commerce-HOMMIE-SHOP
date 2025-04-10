@@ -47,11 +47,11 @@ module.exports.addAddress = async({state, city, zip, addressType, address,ref}) 
 }
 
 
-module.exports.createAddToWishList = async({userid, productid}) =>{
+module.exports.createAddToWishList = async({userId, productId}) =>{
   
  const wishList = await wishListModel.create({
-    userId:userid,
-    productId:productid
+    userId,
+    productId,
   });
   return wishList;
 }

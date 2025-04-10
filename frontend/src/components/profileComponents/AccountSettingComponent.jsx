@@ -114,7 +114,7 @@ const AccountSettingComponent = () => {
     setZip("");
   }
 
-  const applyHandler = () => { // updating the user 
+  const applyHandler = (e) => { // updating the user 
     const updateUser = {
       fullname: { firstname, lastname },
       email,
@@ -122,6 +122,7 @@ const AccountSettingComponent = () => {
     };
     dispatch(updateUserAction(updateUser, token));
     setAddressUpdated(!addressUpdated);
+    
   };
 
 

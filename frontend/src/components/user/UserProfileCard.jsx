@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import UserProfileComponent from "../profileComponents/UserProfileComponent";
 import { useDispatch, useSelector } from "react-redux";
 import { getProfile, logout } from "../../redux/actions/userActions";
@@ -7,6 +7,7 @@ import OrderListComponent from "../profileComponents/OrderListComponent";
 import NavbarHeader from "../header-footer/NavbarHeader";
 import CartListComponent from "../profileComponents/CartListComponent";
 import AccountSettingComponent from "../profileComponents/AccountSettingComponent";
+import WishListComponent from "../profileComponents/WishListComponent";
 
 const UserProfileCard = () => {
   const dispatch = useDispatch();
@@ -14,51 +15,69 @@ const UserProfileCard = () => {
   const navigate = useNavigate();
   const token = useSelector((state) => state.auth.token);
   const user = useSelector((state) => state.profile.user);
-  const { navCart, trackOrder } = location.state || {};
- 
+  const { navCart, trackOrder, navWishList } = location.state || {};
+
   const [profile, setProfile] = useState(true);
   const [order, setOrder] = useState(false);
   const [cart, setCart] = useState(false);
   const [AccountSettings, setAccountSettings] = useState(false);
-  const formattedDate = user
-    ? new Date(user.createdAt).toLocaleDateString("en-CA")
-    : "";
-  const fullname =
-    user && user.fullname ? user.fullname : { firstname: "", lastname: "" };
-  const imagePath = user?.image
-    ? `${import.meta.env.VITE_API_URL}/public${user.image.replace(
+  const [wishlist, setWishlist] = useState(false);
+
+  const formattedDate = useMemo(() => {
+    return user ? new Date(user.createdAt).toLocaleDateString("en-CA") : "";
+  }, [user]);
+
+  const fullname = useMemo(() => {
+    return user && user.fullname ? user.fullname : { firstname: "", lastname: "" };
+  }, [user]);
+
+  const imagePath = useMemo(() => {
+    return user?.image
+      ? `${import.meta.env.VITE_API_URL}/public${user.image.replace(
         "C:\\Users\\surface\\Desktop\\task1\\Backend\\public",
         ""
       )}`
-    : "";
+      : "";
+  }, [user]);
 
-   
+  const editProfileHandler = (e) => {
+    e.preventDefault();
+    accountSettingHandler();
+  };
 
   const profileHandler = () => {
     setProfile(true);
     setOrder(false);
     setCart(false);
+    setWishlist(false);
     setAccountSettings(false);
   };
- 
 
-  const accountSettingHandler = ()=>{
+  const accountSettingHandler = () => {
     setProfile(false);
     setOrder(false);
     setCart(false);
-    setAccountSettings(true)
-  }
+    setWishlist(false);
+    setAccountSettings(true);
+  };
+
+  const wishListHandler = () => {
+    setWishlist(true);
+    setProfile(false);
+    setOrder(false);
+    setCart(false);
+    setAccountSettings(false);
+  };
 
   const logoutHandler = () => {
     dispatch(logout(token));
     navigate("/login");
   };
 
-
   useEffect(() => {
     dispatch(getProfile(token));
-  }, [dispatch, token,]);
-  
+  }, [dispatch, token]);
+
   useEffect(() => {
     if (navCart) {
       cartHandler();
@@ -66,13 +85,17 @@ const UserProfileCard = () => {
     if (trackOrder) {
       orderHandler();
     }
-  },[navCart, trackOrder]);
+    if (navWishList) {
+      wishListHandler();
+    }
+  }, [navCart, trackOrder, navWishList]);
 
   const cartHandler = () => {
     setProfile(false);
     setOrder(false);
     setCart(true);
     setAccountSettings(false);
+    setWishlist(false);
   };
 
   const orderHandler = () => {
@@ -80,6 +103,7 @@ const UserProfileCard = () => {
     setProfile(false);
     setCart(false);
     setAccountSettings(false);
+    setWishlist(false);
   };
 
   return (
@@ -105,7 +129,8 @@ const UserProfileCard = () => {
                 className="w-24 h-24 rounded-full object-cover border-4 border-gray-200"
               />
             </div>
-            <button className="mt-8 bg-black text-white px-16 py-2  hover:bg-gray-800">
+            <button className="mt-8 bg-black text-white px-16 py-2  hover:bg-gray-800"
+              onClick={editProfileHandler}>
               EDIT PROFILE
             </button>
           </div>
@@ -129,10 +154,12 @@ const UserProfileCard = () => {
               >
                 Cart List
               </li>
-              <li className="hover:text-black cursor-pointer">Whishlist</li>
               <li className="hover:text-black cursor-pointer"
-               onClick={accountSettingHandler}
-               >
+                onClick={wishListHandler}
+              >Whishlist</li>
+              <li className="hover:text-black cursor-pointer"
+                onClick={accountSettingHandler}
+              >
                 Account Settings
               </li>
               <li
@@ -146,8 +173,9 @@ const UserProfileCard = () => {
         </div>
         {profile && <UserProfileComponent />}
         {order && <OrderListComponent />}
-        {cart  && <CartListComponent />}
-        {AccountSettings && <AccountSettingComponent/>}
+        {cart && <CartListComponent />}
+        {AccountSettings && <AccountSettingComponent />}
+        {wishlist && <WishListComponent />}
       </div>
     </>
   );

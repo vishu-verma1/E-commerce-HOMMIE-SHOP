@@ -4,6 +4,7 @@ const router = express.Router();
 const authUser = require("../middleware/authUser");
 const { body } = require("express-validator");
 const { uploadImage } = require("../config/multerconfig");
+const cacheMiddleware = require("../middleware/caching");
 
 router.post(
   "/signup",
@@ -77,7 +78,7 @@ router.post(
 
 router.post("/address", authUser.isLogin, userController.addressController);
 router.post("/addressupdate", authUser.isLogin, userController.updateAddressController);
-router.get("/getaddress", authUser.isLogin, userController.getAddressController);
+router.get("/getaddress", authUser.isLogin, cacheMiddleware, userController.getAddressController);
 
 router.post(
   "/profilepic",
@@ -89,18 +90,42 @@ router.post(
 router.get(
   "/addtocart/:productid",
   authUser.isLogin,
+  cacheMiddleware,
   userController.addToCartController
 );
 
 router.get(
   "/addtowishlist/:productid",
   authUser.isLogin,
+  cacheMiddleware,
   userController.addToWishListController
 );
 router.get(
   "/getcartlist",
   authUser.isLogin,
+  cacheMiddleware,
   userController.getCartListController
+);
+
+router.get(
+  "/removecartlist/:productid",
+  authUser.isLogin,
+  // cacheMiddleware,
+  userController.removeCartListController
+);
+
+router.get(
+  "/getwishlist",
+  authUser.isLogin,
+  // cacheMiddleware,
+  userController.getWishListController
+);
+
+router.get(
+  "/removewishlist/:productid",
+  authUser.isLogin,
+  // cacheMiddleware,
+  userController.removeWishListController
 );
 
 module.exports = router;

@@ -308,7 +308,6 @@ module.exports.passwordUpdatetController = async (req, res) => {
   }
   const { email } = req.user;
   const user = await userModel.findOne({ email });
-  
 
   const { newpassword, confirmpassword } = req.body;
 
@@ -337,16 +336,25 @@ module.exports.addressController = async (req, res) => {
 
   try {
     const { state, city, zip, address, addressType } = req.body;
-    
-    const addressCount = await addressModel.countDocuments({ ref: req.user._id });
+
+    const addressCount = await addressModel.countDocuments({
+      ref: req.user._id,
+    });
     if (addressCount >= 5) {
-      return res.status(400).json({ message: "You cannot add more than 5 addresses" });
+      return res
+        .status(400)
+        .json({ message: "You cannot add more than 5 addresses" });
     }
 
     if (addressType === "default") {
-      const defaultAddress = await addressModel.findOne({ ref: req.user._id, addressType: "default" });
+      const defaultAddress = await addressModel.findOne({
+        ref: req.user._id,
+        addressType: "default",
+      });
       if (defaultAddress) {
-        return res.status(400).json({ message: "You already have a default address" });
+        return res
+          .status(400)
+          .json({ message: "You already have a default address" });
       }
     }
 
@@ -360,11 +368,12 @@ module.exports.addressController = async (req, res) => {
     });
 
     add.save();
-   
 
     res.status(200).json({ message: "Address is added to the profile" });
   } catch (err) {
-    res.status(401).json({ error: err.message, message: "Something went wrong" });
+    res
+      .status(401)
+      .json({ error: err.message, message: "Something went wrong" });
   }
 };
 
@@ -372,23 +381,38 @@ module.exports.updateAddressController = async (req, res) => {
   // #swagger.tags = ['Users']
 
   try {
-    const { addressId, state, city, zip, address, addressType, selected } = req.body;
+    const { addressId, state, city, zip, address, addressType, selected } =
+      req.body;
 
-    const addressToUpdate = await addressModel.findOne({ _id: addressId, ref: req.user._id });
+    const addressToUpdate = await addressModel.findOne({
+      _id: addressId,
+      ref: req.user._id,
+    });
 
     if (!addressToUpdate) {
       return res.status(404).json({ message: "Address not found" });
     }
 
-    if (addressType === "default" && addressToUpdate.addressType !== "default") {
-      const defaultAddress = await addressModel.findOne({ ref: req.user._id, addressType: "default" });
+    if (
+      addressType === "default" &&
+      addressToUpdate.addressType !== "default"
+    ) {
+      const defaultAddress = await addressModel.findOne({
+        ref: req.user._id,
+        addressType: "default",
+      });
       if (defaultAddress) {
-        return res.status(400).json({ message: "You already have a default address" });
+        return res
+          .status(400)
+          .json({ message: "You already have a default address" });
       }
     }
 
     if (selected) {
-      await addressModel.updateMany({ ref: req.user._id, _id: { $ne: addressId } }, { selected: false });
+      await addressModel.updateMany(
+        { ref: req.user._id, _id: { $ne: addressId } },
+        { selected: false }
+      );
     }
 
     addressToUpdate.state = state || addressToUpdate.state;
@@ -402,7 +426,9 @@ module.exports.updateAddressController = async (req, res) => {
 
     res.status(200).json({ message: "Address updated successfully" });
   } catch (err) {
-    res.status(400).json({ error: err.message, message: "Something went wrong" });
+    res
+      .status(400)
+      .json({ error: err.message, message: "Something went wrong" });
   }
 };
 
@@ -410,16 +436,19 @@ module.exports.getAddressController = async (req, res) => {
   // #swagger.tags = ['Users']
 
   try {
-    
     const addresses = await addressModel.find({ ref: req.user._id });
 
     if (!addresses || addresses.length === 0) {
       return res.status(200).json({ message: "No addresses found" });
     }
 
-    res.status(200).json({ addresses, message: "Addresses fetched successfully" });
+    res
+      .status(200)
+      .json({ addresses, message: "Addresses fetched successfully" });
   } catch (err) {
-    res.status(400).json({ error: err.message, message: "Something went wrong" });
+    res
+      .status(400)
+      .json({ error: err.message, message: "Something went wrong" });
   }
 };
 
@@ -433,7 +462,7 @@ module.exports.profilePicController = async (req, res) => {
       const oldImagePath = path.resolve(__dirname, "../..", req.user.image);
 
       if (fs.existsSync(oldImagePath)) {
-        fs.unlinkSync(oldImagePath); 
+        fs.unlinkSync(oldImagePath);
       }
     }
 
@@ -474,25 +503,60 @@ module.exports.addToCartController = async (req, res) => {
   }
 };
 
-module.exports.addToWishListController = async (req, res) => {
+module.exports.removeCartListController = async (req, res) => {
   try {
-    const productid = req.params.productid;
-    const userid = req.user._id;
-    const wishListexist = await wishListModel.find({ produtId: productid });
-    if (wishListexist) {
-      return res
-        .status(400)
-        .json({ message: "Product is already in your wishlist" });
+    const productId = req.params.productid;
+    const userId = req.user._id;
+
+   
+    const user = await userModel.findOne({ _id: userId });
+   
+    const productIndex = user.cart.indexOf(productId);
+    if (productIndex === -1) {
+      return res.status(404).json({ message: "Product not found in cart" });
     }
 
-    const wishProduct = await userService.createAddToWishList({
-      userid,
-      productid,
-    });
+    
+    user.cart.splice(productIndex, 1);
+    await user.save();
+    const users = await userModel.findOne({ _id: userId });
+  
+    console.log("removeCArtlist");
+    
+    res.status(200).json({ message: "Product removed from cart" });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
 
-    res
-      .status(200)
-      .json({ wishProduct, message: "your product is added to your wishlist" });
+module.exports.addToWishListController = async (req, res) => {
+  try {
+    const productId = req.params.productid;
+    const userId = req.user._id;
+
+    let wishListExist = await wishListModel.findOne({ userId });
+
+    if (wishListExist) {
+      if (wishListExist.productId.includes(productId)) {
+        return res
+          .status(200)
+          .json({ message: "Product is already in your wishlist" });
+      }
+
+      wishListExist.productId.push(productId);
+      wishListExist.save();
+      return res
+        .status(200)
+        .json({ message: "Your product is added to your wishlist" });
+    } else {
+      const wishProduct = await userService.createAddToWishList({
+        userId,
+        productId,
+      });
+      res
+        .status(200)
+        .json({ message: "Your product is added to your wishlist" });
+    }
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -502,9 +566,53 @@ module.exports.getCartListController = async (req, res) => {
   try {
     const user = await userModel
       .findOne({ email: req.user.email })
-      .populate("cart");
-
+      .populate("cart");    
     res.status(200).json({ cart: user.cart, message: "your list" });
+    console.log("getCArtlist")
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+module.exports.getWishListController = async (req, res) => {
+  try {
+    const wishList = await wishListModel
+      .findOne({ userId: req.user._id })
+      .populate("productId");
+      if(wishList){
+
+        return res.status(200).json({ wishList, message: "your list" });
+      }
+      return res.status(200).json({ message: "wishlist is empty" });
+      
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+module.exports.removeWishListController = async (req, res) => {
+  try {
+    const productId = req.params.productid;
+    const userId = req.user._id;
+
+    
+    const wishList = await wishListModel.findOne({ userId });
+
+    if (!wishList) {
+      return res.status(404).json({ message: "Wishlist not found" });
+    }
+
+    
+    const productIndex = wishList.productId.indexOf(productId);
+    if (productIndex === -1) {
+      return res.status(404).json({ message: "Product not found in wishlist" });
+    }
+
+   
+    wishList.productId.splice(productIndex, 1);
+    await wishList.save();
+
+    res.status(200).json({ message: "Product removed from wishlist" });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
